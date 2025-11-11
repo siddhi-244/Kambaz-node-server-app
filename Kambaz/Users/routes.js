@@ -45,7 +45,9 @@ export default function UserRoutes(app, db) {
     const { courseId } = req.params;
     const enrollments = enrollmentsDao.findEnrollmentsForCourse(courseId);
     const userIds = enrollments.map((e) => e.user);
-    const users = userIds.map((userId) => dao.findUserById(userId)).filter(Boolean);
+    const users = userIds
+      .map((userId) => dao.findUserById(userId))
+      .filter(Boolean);
     res.json(users);
   };
 
@@ -62,12 +64,12 @@ export default function UserRoutes(app, db) {
 
     dao.updateUser(userId, userUpdates);
     const updatedUser = dao.findUserById(userId);
-    
+
     // Update session if user updated their own profile
     if (currentUser._id === userId) {
       req.session["currentUser"] = updatedUser;
     }
-    
+
     res.json(updatedUser);
   };
 
@@ -79,7 +81,13 @@ export default function UserRoutes(app, db) {
     }
     const currentUser = dao.createUser(req.body);
     req.session["currentUser"] = currentUser;
-    res.json(currentUser);
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
+      res.json(currentUser);
+    });
   };
 
   const signin = (req, res) => {
