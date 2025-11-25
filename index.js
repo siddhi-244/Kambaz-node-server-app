@@ -10,7 +10,10 @@ import CourseRoutes from "./Kambaz/Courses/routes.js";
 import AssignmentRoutes from './Kambaz/Assignments/routes.js';
 import ModulesRoutes from './Kambaz/Modules/routes.js';
 import EnrollmentRoutes from './Kambaz/Enrollments/routes.js';
+import mongoose from "mongoose";
 
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
+mongoose.connect(CONNECTION_STRING);
 const app = express();
 app.use(
  cors({

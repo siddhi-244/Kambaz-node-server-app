@@ -1,48 +1,33 @@
 import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
-export default function UsersDao(db) {
-  const { users } = db;
+export default function UsersDao() {
+  const findAllUsers = () => model.find();
 
-  const findAllUsers = () => users;
+  const findUserById = (userId) => model.findById(userId);
 
-  const findUserById = (userId) => {
-    return users.find((user) => user._id === userId);
-  };
+  const findUserByUsername = (username) =>
+    model.findOne({ username: username });
 
-  const findUserByUsername = (username) => {
-    return users.find((user) => user.username === username);
-  };
-
-  const findUserByCredentials = (username, password) => {
-    return users.find(
-      (user) => user.username === username && user.password === password
-    );
-  };
+  const findUserByCredentials = (username, password) =>
+    model.findOne({ username, password });
 
   const createUser = (user) => {
     const newUser = { ...user, _id: uuidv4() };
-    users.push(newUser);
-    return newUser;
+    return model.create(newUser);
   };
 
-  const updateUser = (userId, userUpdates) => {
-    const index = users.findIndex((user) => user._id === userId);
-    if (index !== -1) {
-      users[index] = { ...users[index], ...userUpdates };
-      return users[index];
-    }
-    return null;
-  };
+  const updateUser = (userId, user) =>
+    model.updateOne({ _id: userId }, { $set: user });
 
-  const deleteUser = (userId) => {
-    const index = users.findIndex((user) => user._id === userId);
-    if (index !== -1) {
-      users.splice(index, 1);
-      return true;
-    }
-    return false;
+  const deleteUser = (userId) => model.findByIdAndDelete(userId);
+  const findUsersByRole = (role) => model.find({ role: role });
+  const findUsersByPartialName = (partialName) => {
+    const regex = new RegExp(partialName, "i");
+    return model.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
   };
-
   return {
     findAllUsers,
     findUserById,
@@ -51,5 +36,7 @@ export default function UsersDao(db) {
     createUser,
     updateUser,
     deleteUser,
+    findUsersByRole,
+    findUsersByPartialName,
   };
 }
