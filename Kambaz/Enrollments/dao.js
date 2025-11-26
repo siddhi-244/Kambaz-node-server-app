@@ -1,43 +1,44 @@
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
+export default function EnrollmentsDao() {
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((enrollment) => enrollment.course);
+  }
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((enrollment) => enrollment.user);
+  }
 
-export default function EnrollmentsDao(db) {
-  const { enrollments } = db;
+  function enrollUserInCourse(userId, courseId) {
+    return model.create({
+      user: userId,
+      course: courseId,
+      _id: `${userId}-${courseId}`,
+    });
+  }
+  function unenrollUserFromCourse(user, course) {
+    return model.deleteOne({ user, course });
+  }
 
-  const enrollUserInCourse = (userId, courseId) => {
-    const existingEnrollment = enrollments.find(
-      (e) => e.user === userId && e.course === courseId
-    );
-    if (!existingEnrollment) {
-      enrollments.push({ _id: uuidv4(), user: userId, course: courseId });
-    }
+  function unenrollAllUsersFromCourse(courseId) {
+   return model.deleteMany({ course: courseId });
+ }
+
+ const findEnrollmentsForUser = async (userId) => {
+    return await model.find({ user: userId });
   };
 
-  const unenrollUserFromCourse = (userId, courseId) => {
-    const index = enrollments.findIndex(
-      (e) => e.user === userId && e.course === courseId
-    );
-    if (index !== -1) {
-      enrollments.splice(index, 1);
-    }
-  };
-
-  const findEnrollmentsForUser = (userId) => {
-    return enrollments.filter((e) => e.user === userId);
-  };
-
-  const findEnrollmentsForCourse = (courseId) => {
-    return enrollments.filter((e) => e.course === courseId);
-  };
-
-  const isUserEnrolledInCourse = (userId, courseId) => {
-    return enrollments.some((e) => e.user === userId && e.course === courseId);
+  const findEnrollmentsForCourse = async (courseId) => {
+    return await model.find({ course: courseId });
   };
 
   return {
+    findCoursesForUser,
+    findUsersForCourse,
     enrollUserInCourse,
     unenrollUserFromCourse,
-    findEnrollmentsForUser,
+    unenrollAllUsersFromCourse,
     findEnrollmentsForCourse,
-    isUserEnrolledInCourse,
+    findEnrollmentsForUser
   };
 }

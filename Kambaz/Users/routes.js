@@ -3,9 +3,8 @@ import EnrollmentsDao from "../Enrollments/dao.js";
 
 export default function UserRoutes(app) {
   const dao = UsersDao();
-  // const enrollmentsDao = EnrollmentsDao(db);
-
-  const createUser = async(req, res) => {
+  const enrollmentsDao = EnrollmentsDao();
+  const createUser = async (req, res) => {
     const user = await dao.createUser(req.body);
     res.json(user);
   };
@@ -40,13 +39,13 @@ export default function UserRoutes(app) {
     }
   };
 
-  const findUsersForCourse = (req, res) => {
+  const findUsersForCourse = async (req, res) => {
     const { courseId } = req.params;
-    const enrollments = enrollmentsDao.findEnrollmentsForCourse(courseId);
+    const enrollments = await enrollmentsDao.findEnrollmentsForCourse(courseId);
     const userIds = enrollments.map((e) => e.user);
-    const users = userIds
-      .map((userId) => dao.findUserById(userId))
-      .filter(Boolean);
+    const users = await Promise.all(
+      userIds.map((userId) => dao.findUserById(userId))
+    );
     res.json(users);
   };
 
@@ -54,11 +53,12 @@ export default function UserRoutes(app) {
     const userId = req.params.userId;
     const userUpdates = req.body;
     await dao.updateUser(userId, userUpdates);
+    const updatedUser = await dao.findUserById(userId);
     const currentUser = req.session["currentUser"];
-   if (currentUser && currentUser._id === userId) {
-     req.session["currentUser"] = { ...currentUser, ...userUpdates };
-   }
-   res.json(currentUser);
+    if (currentUser && currentUser._id === userId) {
+      req.session["currentUser"] = { ...currentUser, ...userUpdates };
+    }
+    res.json(updatedUser);
   };
 
   const signup = async (req, res) => {
@@ -67,7 +67,7 @@ export default function UserRoutes(app) {
       res.status(400).json({ message: "Username already in use" });
       return;
     }
-    const currentUser = dao.createUser(req.body);
+    const currentUser = await dao.createUser(req.body);
     req.session["currentUser"] = currentUser;
     req.session.save((err) => {
       if (err) {

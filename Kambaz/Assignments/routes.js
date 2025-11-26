@@ -1,17 +1,17 @@
 import AssignmentsDao from "./dao.js";
 
-export default function AssignmentRoutes(app, db) {
-  const dao = AssignmentsDao(db);
+export default function AssignmentRoutes(app) {
+  const dao = AssignmentsDao();
 
-  const findAssignmentsForCourse = (req, res) => {
+  const findAssignmentsForCourse = async (req, res) => {
     const { cid } = req.params;
-    const assignments = dao.findAssignmentsForCourse(cid);
+    const assignments = await dao.findAssignmentsForCourse(cid);
     res.json(assignments);
   };
 
-  const findAssignmentById = (req, res) => {
+  const findAssignmentById = async (req, res) => {
     const { aid } = req.params;
-    const assignment = dao.findAssignmentById(aid);
+    const assignment = await dao.findAssignmentById(aid);
     if (assignment) {
       res.json(assignment);
     } else {
@@ -19,19 +19,19 @@ export default function AssignmentRoutes(app, db) {
     }
   };
 
-  const createAssignment = (req, res) => {
+  const createAssignment = async (req, res) => {
     const { cid } = req.params;
     const newAssignment = {
       ...req.body,
       course: cid,
     };
-    const assignment = dao.createAssignment(newAssignment);
+    const assignment = await dao.createAssignment(newAssignment);
     res.json(assignment);
   };
 
-  const updateAssignment = (req, res) => {
+  const updateAssignment = async (req, res) => {
     const { aid } = req.params;
-    const assignment = dao.updateAssignment(aid, req.body);
+    const assignment = await dao.updateAssignment(aid, req.body);
     if (assignment) {
       res.json(assignment);
     } else {
@@ -39,14 +39,10 @@ export default function AssignmentRoutes(app, db) {
     }
   };
 
-  const deleteAssignment = (req, res) => {
+  const deleteAssignment = async (req, res) => {
     const { aid } = req.params;
-    const success = dao.deleteAssignment(aid);
-    if (success) {
-      res.sendStatus(204);
-    } else {
-      res.status(404).json({ message: "Assignment not found" });
-    }
+    await dao.deleteAssignment(aid);
+    res.sendStatus(204);
   };
 
   app.get("/api/courses/:cid/assignments", findAssignmentsForCourse);
